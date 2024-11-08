@@ -1,0 +1,39 @@
+version: "3.8"
+#name: laravel-log-manager
+
+networks:
+    elk-network:
+        driver: bridge
+
+services:
+
+    filebeat:
+        image: elastic/filebeat:8.11.1
+        container_name: filebeat
+        user: root
+        platform: linux/amd64
+        volumes:
+            - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+            - ../storage/logs:/var/log/ELK-log-manager #Be careful about this line if you put this file in another path this line maybe need change (in my case I put 'docker-compose.yml' in directory named 'elk' which placed in the root of Laravel app so to reach the path of log files I use '../storage/logs')
+        environment:
+            - monitoring.enabled= true
+        depends_on:
+            - logstash
+            - elasticsearch
+        command: ["--strict.perms=false"]
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        stdin_open: "true"
+        tty: "true"
+        deploy:
+            mode: global
+        logging:
+            driver: 'json-file'
+            options:
+                max-size: '12m'
+                max-file: "100"
+
+        networks:
+            - elk-network
